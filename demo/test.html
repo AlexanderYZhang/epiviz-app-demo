@@ -155,23 +155,23 @@
         $.getJSON('http://metaviz.cbcb.umd.edu/hmp-api/?method=measurements', function(data) {
             var length = data.result.id.length;
             var info = data.result;
-            measurements = [];
-            console.log(info);
+            measurements = {};
+            measurements[data.result.datasourceId] = []
             for (var i = 0; i < length; i++) {
                 var obj = {
                     "id": info.id[i],
                     "name": info.name[i],
-                    "type": info.type[i],
+                    "type": info.type,
                     "annotation": info.annotation[i],
-                    "datasourcegroup": info.datasourceGroup[i],
-                    "datasourceId": info.datasourceId[i],
-                    "defaultChartType": info.defaultChartType[i],
-                    "minValue": info.minValue[i],
-                    "maxValue": info.maxValue[i],
-                    "metadata": info.metadata[i],
+                    "datasourcegroup": info.datasourceGroup,
+                    "defaultChartType": info.defaultChartType,
+                    "minValue": info.minValue,
+                    "maxValue": info.maxValue,
+                    "metadata": info.metadata,
                 }
-                measurements.push(obj);
+                measurements[data.result.datasourceId].push(obj);
             }
+            console.log(measurements)
             var options = ["test1", "test2", "test3"];
             options.forEach(function(text) {
                 var item = document.createElement('div');
@@ -213,7 +213,7 @@
             $('#leftmenu').accordion({
                 exclusive: false
             });
-            measurements.forEach(function(data) {
+            Object.keys(measurements).forEach(function(data) {
                 var item = document.createElement('div');
                 var title = document.createElement('a');
                 var titlecheckbox = document.createElement('div');
@@ -221,28 +221,36 @@
                 var checkboxinput = document.createElement('input');
                 var icon = document.createElement('i');
                 var content = document.createElement('div');
-                var form = document.createElement('div');
+                var form = document.createElement('div'); 
                 var fields = document.createElement('div');
-                var field = document.createElement('div');
-                var checkbox = document.createElement('div');
-                var input = document.createElement('input');
-                var label = document.createElement('label');    
+                
                 item.className = "item";
-                item.id = data.id;
+                item.id = data;
                 title.className = "title";
                 titlecheckbox.className = "ui checkbox"
                 checkboxinput.type = "checkbox"
-                checkboxlabel.innerHTML = "test";
+                checkboxlabel.innerHTML = data;
                 icon.className = "dropdown icon";
                 content.className = "content";
                 form.className = "ui form";
-                fields.className = "grouped fields";
-                field.className = "field";
-                checkbox.className = "ui checkbox";
-                input.type = "checkbox"
-                input.name = "small"
-                label.innerHTML = "test"; 
+                measurements[data].forEach(function(point) {
+                    var field = document.createElement('div');
+                    var checkbox = document.createElement('div');
+                    var input = document.createElement('input');
+                    var label = document.createElement('label'); 
 
+                    fields.className = "grouped fields";
+                    field.className = "field";
+                    checkbox.className = "ui checkbox";
+                    input.type = "checkbox"
+                    input.name = "small"
+                    label.innerHTML = point.id; 
+
+                    fields.appendChild(field);
+                    field.appendChild(checkbox);
+                    checkbox.appendChild(input);
+                    checkbox.appendChild(label);    
+                })
                 item.appendChild(title);
                 item.appendChild(content);
                 title.appendChild(titlecheckbox);
@@ -250,10 +258,6 @@
                 titlecheckbox.appendChild(checkboxinput);
                 titlecheckbox.appendChild(checkboxlabel);
                 content.appendChild(fields);
-                fields.appendChild(field);
-                field.appendChild(checkbox);
-                checkbox.appendChild(input);
-                checkbox.appendChild(label);    
 
                 $('#rightmenu').append(item);
             });
