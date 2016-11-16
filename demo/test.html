@@ -157,6 +157,8 @@
             var info = data.result;
             measurements = {};
             measurements[data.result.datasourceId] = []
+            annotations = Object.keys(data.result.annotation[0]);
+            console.log(annotations);
             for (var i = 0; i < length; i++) {
                 var obj = {
                     "id": info.id[i],
@@ -173,40 +175,43 @@
             }
             console.log(measurements)
             var options = ["test1", "test2", "test3"];
-            options.forEach(function(text) {
+            Object.keys(measurements).forEach(function(text) {
                 var item = document.createElement('div');
                 var title = document.createElement('a');
                 var icon = document.createElement('i');
                 var content = document.createElement('div');
                 var form = document.createElement('div');
                 var fields = document.createElement('div');
-                var field = document.createElement('div');
-                var checkbox = document.createElement('div');
-                var input = document.createElement('input');
-                var label = document.createElement('label');    
-
+                
+                annotations.forEach(function(anno) {
+                    var field = document.createElement('div');
+                    var checkbox = document.createElement('div');
+                    var input = document.createElement('input');
+                    var label = document.createElement('label');  
+                    field.className = "field";
+                    checkbox.className = "ui radio checkbox";
+                    input.type = "checkbox"
+                    input.name = "small"
+                    label.innerHTML = anno; 
+                    fields.appendChild(field);
+                    field.appendChild(checkbox);
+                    checkbox.appendChild(input);
+                    checkbox.appendChild(label);  
+                });  
                 item.className = "item";
                 item.id = text;
                 title.className = "title";
-                title.innerHTML = text;
+                title.innerHTML = "Annotations";
                 icon.className = "dropdown icon";
                 content.className = "content";
                 form.className = "ui form";
                 fields.className = "grouped fields";
-                field.className = "field";
-                checkbox.className = "ui radio checkbox";
-                input.type = "checkbox"
-                input.name = "small"
-                label.innerHTML = text; 
 
                 item.appendChild(title);
                 item.appendChild(content);
                 title.appendChild(icon);
                 content.appendChild(fields);
-                fields.appendChild(field);
-                field.appendChild(checkbox);
-                checkbox.appendChild(input);
-                checkbox.appendChild(label);    
+  
 
                 $('#leftmenu').append(item);
             });
