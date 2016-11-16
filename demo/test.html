@@ -1,0 +1,367 @@
+<!doctype html>
+<html>
+
+
+<title>epiviz-charts</title>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script> 
+
+
+    <script src="../../jquery/dist/jquery.js"></script>
+
+    <!--<script type="text/javascript" src="../../datatables.net/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="../../datatables.net-select/js/dataTables.select.js"></script> 
+    <script type="text/javascript" src="../../datatables.net-buttons/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="TableTools.min.js"></script>-->
+
+    <!--<link rel="stylesheet" type="text/css" href="../../datatables.net-jqui/css/dataTables.jqueryui.min.css">
+    <link rel="stylesheet" type="text/css" href="../../datatables.net-select-jqui/css/select.jqueryui.min.css">-->
+    <link rel="stylesheet" type="text/css" href="../../semantic/dist/semantic.min.css">
+    <script src="../../semantic/dist/semantic.min.js"></script> 
+    
+
+    <!--<link rel="import" href="../../epiviz-charts/epiviz-scatter-plot.html">
+    <link rel="import" href="../../epiviz-charts/epiviz-genes-track.html">
+    <link rel="import" href="../../epiviz-charts/epiviz-line-track.html">
+    <link rel="import" href="../../epiviz-charts/epiviz-blocks-track.html">
+    <link rel="import" href="../../epiviz-charts/epiviz-heatmap-plot.html">
+    <link rel="import" href="../../epiviz-charts/epiviz-line-plot.html">
+    <link rel="import" href="../../epiviz-charts/epiviz-stacked-line-plot.html">
+    <link rel="import" href="../../epiviz-charts/epiviz-stacked-line-track.html">   
+
+    <link rel="import" href="../../epiviz-data-source/epiviz-data-source.html">
+    <link rel="import" href="../../epiviz-environment/epiviz-environment.html">-->
+</head>
+<style>
+/*    #table-container {
+        position: relative;
+        width: 50%;
+        top: 200px;
+    }
+    #graph-container {
+        position: relative;
+        top: 200px;
+    }*/
+    .ui.modal {
+        position: fixed;
+        top: 15%;
+        left: 40%;
+        padding: 20px;
+    } 
+    #button {
+        float: right;
+    }
+    .ui.action.input {
+        width: 100%;
+    }
+    #newmodal {
+       height:50%;
+    }
+    .ui.grid {
+        padding: 10px;
+    }
+    #rightmenu {
+        overflow:scroll;
+    }
+</style>
+
+<body>
+    <div class="ui top fixed menu">
+        <div class="ui simple dropdown item">
+            <div class="text">Graphs</div>
+            <i class="dropdown icon"></i>
+            <div class="menu" id="menu"> 
+            </div>
+        </div>
+        <a class="item" id="modalbutton">Modal</a>
+    </div>
+
+    <div id ="newmodal" class="ui scrolling modal">
+        <div class="ui action input">
+            <button class="ui button">Filter</button>
+            <input id="filter" type="text" placeholder="Filter">
+        </div>
+        <div class="ui grid">
+            <div class="four wide column">
+                <div id="leftmenu" class="ui vertical accordion menu"> 
+                    <!--<div class="item">
+                        <a class="title">
+                            <div class="ui checkbox">
+                                <input type="checkbox">
+                                <label>hello</label>
+                            </div>
+                            <i class="dropdown icon"></i>
+                        </a>
+                        <div class="content">
+                            <div class="ui form">
+                                <div class="grouped fields">
+                                    <div class="field">
+                                        <div class="ui radio checkbox">
+                                            <input type="checkbox" name="hello">
+                                            <label>checkbox</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>-->
+                </div>
+            </div>
+            <div class="twelve wide column">
+                <div id="rightmenu" class="ui vertical fluid accordion menu">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="ui modal">
+        <div id="tablediv">
+        </div>
+        <button id="button">Finish</button>
+    </div>
+    <div id="polymercontainer">
+        <epiviz-data-source provider-type="epiviz.data.WebServerDataProvider" provider-id="umd" provider-url="http://epiviz.cbcb.umd.edu/data/main.php"></epiviz-data-source>
+    </div>
+</body>
+
+<script>
+    var table;
+    var measurements;
+    var graph;
+    window.onload = function() {
+        var graphs = ["Blocks Track", "Line Track", "Stacked Track", "Genes Track", "Scatter Plot", "Heatmap", "Line Plot", "Stacked Plot", "Icicle"];
+        var div = document.getElementById("menu");
+        graphs.forEach(function(graph) {
+            var item = document.createElement('div');
+            var text = document.createElement('a');
+            text.text = graph; 
+            text.id = "item";
+            item.className = "item";
+            item.appendChild(text);
+            div.appendChild(item);
+        });
+    }
+    function overlay() {
+        el = document.getElementById("overlay");
+        el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
+    }
+    $(document).on('click', '#modalbutton', function() {
+        $('#newmodal').show();
+        loadMeasurements();
+    })
+    function loadMeasurements() {
+        $.getJSON('http://metaviz.cbcb.umd.edu/hmp-api/?method=measurements', function(data) {
+            var length = data.result.id.length;
+            var info = data.result;
+            measurements = [];
+            console.log(info);
+            for (var i = 0; i < length; i++) {
+                var obj = {
+                    "id": info.id[i],
+                    "name": info.name[i],
+                    "type": info.type[i],
+                    "annotation": info.annotation[i],
+                    "datasourcegroup": info.datasourceGroup[i],
+                    "datasourceId": info.datasourceId[i],
+                    "defaultChartType": info.defaultChartType[i],
+                    "minValue": info.minValue[i],
+                    "maxValue": info.maxValue[i],
+                    "metadata": info.metadata[i],
+                }
+                measurements.push(obj);
+            }
+            var options = ["test1", "test2", "test3"];
+            options.forEach(function(text) {
+                var item = document.createElement('div');
+                var title = document.createElement('a');
+                var icon = document.createElement('i');
+                var content = document.createElement('div');
+                var form = document.createElement('div');
+                var fields = document.createElement('div');
+                var field = document.createElement('div');
+                var checkbox = document.createElement('div');
+                var input = document.createElement('input');
+                var label = document.createElement('label');    
+
+                item.className = "item";
+                item.id = text;
+                title.className = "title";
+                title.innerHTML = text;
+                icon.className = "dropdown icon";
+                content.className = "content";
+                form.className = "ui form";
+                fields.className = "grouped fields";
+                field.className = "field";
+                checkbox.className = "ui radio checkbox";
+                input.type = "checkbox"
+                input.name = "small"
+                label.innerHTML = text; 
+
+                item.appendChild(title);
+                item.appendChild(content);
+                title.appendChild(icon);
+                content.appendChild(fields);
+                fields.appendChild(field);
+                field.appendChild(checkbox);
+                checkbox.appendChild(input);
+                checkbox.appendChild(label);    
+
+                $('#leftmenu').append(item);
+            });
+            $('#leftmenu').accordion({
+                exclusive: false
+            });
+            measurements.forEach(function(data) {
+                var item = document.createElement('div');
+                var title = document.createElement('a');
+                var titlecheckbox = document.createElement('div');
+                var checkboxlabel = document.createElement('label');
+                var checkboxinput = document.createElement('input');
+                var icon = document.createElement('i');
+                var content = document.createElement('div');
+                var form = document.createElement('div');
+                var fields = document.createElement('div');
+                var field = document.createElement('div');
+                var checkbox = document.createElement('div');
+                var input = document.createElement('input');
+                var label = document.createElement('label');    
+                item.className = "item";
+                item.id = data.id;
+                title.className = "title";
+                titlecheckbox.className = "ui checkbox"
+                checkboxinput.type = "checkbox"
+                checkboxlabel.innerHTML = "test";
+                icon.className = "dropdown icon";
+                content.className = "content";
+                form.className = "ui form";
+                fields.className = "grouped fields";
+                field.className = "field";
+                checkbox.className = "ui checkbox";
+                input.type = "checkbox"
+                input.name = "small"
+                label.innerHTML = "test"; 
+
+                item.appendChild(title);
+                item.appendChild(content);
+                title.appendChild(titlecheckbox);
+                title.appendChild(icon);
+                titlecheckbox.appendChild(checkboxinput);
+                titlecheckbox.appendChild(checkboxlabel);
+                content.appendChild(fields);
+                fields.appendChild(field);
+                field.appendChild(checkbox);
+                checkbox.appendChild(input);
+                checkbox.appendChild(label);    
+
+                $('#rightmenu').append(item);
+            });
+            $('#rightmenu').accordion({
+                exclusive : false
+            });
+        });
+    }
+    $(document).on('click', '#item', function() {
+        graph = $(this).text().toLowerCase();
+        graph = graph.replace(" ", "-");
+        load();
+        $('#modal').show();
+    })
+
+    $(document).on('click', '#button', function() {
+        console.log(table.rows( { selected: true } ).data());
+        var data = table.rows( { selected: true} ).data();
+        var env = document.createElement('epiviz-environment');
+        if (measurements) {
+            var json = '{';
+            for (var i = 0; i < data.length; i++) {
+                var m = measurements[data[i][4]];
+
+                json += '"measurement' + i + '":{"id":"' + m["id"] + '"' +  
+                        ',"name":"' + m["name"] +  '"' + 
+                        ',"type":"' + m["type"] + '"' + 
+                        ',"datasourceId":"' + m["datasourceId"] + '"' + 
+                        ',"datasourceGroup":"' + m["datasourcegroup"] + '"' +
+                        ',"dataprovider":"' + 'umd' + '"' + 
+                        ',"formula":' + 'null' +
+                        ',"defaultChartType":' + 'null' + 
+                        ',"annotation":' + 'null' +
+                        ',"minValue":' + m["minValue"] +
+                        ',"maxValue":' + m["maxValue"] + '},';
+            }
+            json.substring(0, json.length-1);
+            json += '}';
+            env.measurements = json;
+            $('#polymercontainer').append(env);
+            //var chart = '<epiviz-' + graph + ' dim-s="' + "['" + "measurement0'," + "'measurement1']" + '"' + '></epiviz-' + graph + '>'
+            var chart = document.createElement('epiviz-' + graph);
+            chart.setAttribute("dim-s", '["measurement0", "measurement1"]');
+            var beforeNode = Polymer.dom($('epiviz-environment')).childNodes[0];
+            Polymer.dom($('epiviz-environment')).insertBefore(chart, beforeNode);
+            // Polymer.dom($('epiviz-environment').root).appendChild(chart);
+            // var chart = '<epiviz-' + graph + ' dim-s="[measurement0","measurement1"]"' + '></epiviz-' + graph + '>'
+            // $('epiviz-environment').append(chart);
+        }
+        $('.ui.modal').hide();
+    })
+    function load() {
+        $.getJSON("http://epiviz.cbcb.umd.edu/data/main.php?action=getMeasurements", function(data) {
+            var length = data.data.id.length;
+            var info = data.data;
+            measurements = [];
+            console.log(info);
+            for (var i = 0; i < length; i++) {
+                var obj = {
+                    "id": info.id[i],
+                    "name": info.name[i],
+                    "type": info.type[i],
+                    "annotation": info.annotation[i],
+                    "datasourcegroup": info.datasourceGroup[i],
+                    "datasourceId": info.datasourceId[i],
+                    "defaultChartType": info.defaultChartType[i],
+                    "minValue": info.minValue[i],
+                    "maxValue": info.maxValue[i],
+                    "metadata": info.metadata[i],
+                }
+                measurements.push(obj);
+            }
+
+            var mlength = measurements.length;
+
+            $('#tablediv').append('<table id="modalTable" class="display"><thead><tr><th>Id</th><th>name</th><th>type</th><th>datasourcegroup</th><th>Index</th></tr></thead></table>');
+
+            tableString= '<tbody>';
+
+
+            for (var i=0; i< mlength; i++) {
+                tableString += '<tr><td>' 
+                + measurements[i].id + '</td><td>' + measurements[i].name + '</td><td>' + measurements[i].type + '</td><td>' + measurements[i].datasourcegroup+ '</td><td>' + i + '</td></tr>';
+            }
+
+            tableString += '</tbody>';
+            $('#modalTable').append(tableString);
+            table = $('#modalTable').DataTable({
+                  aoColumns : [
+                    { sWidth: '25%' },
+                    { sWidth: '25%' },
+                    { sWidth: '20%' },
+                    { sWidth: '25%' },
+                    { sWidth: '5%' },
+                  ],
+                select: {style: 'os'},
+                buttons: [
+                    {
+                        text: 'Finish',
+                        action: function ( e, dt, node, config ) {
+                            console.log('clicked');
+                        }
+                    }
+                ]
+            });
+            console.log(table.rows('.selected').data());
+            console.log(table.rows( { selected: true } ).data());
+        });
+    }
+</script>
+</html>
