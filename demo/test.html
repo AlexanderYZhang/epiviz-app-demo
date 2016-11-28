@@ -20,6 +20,8 @@
     <link rel="stylesheet" type="text/css" href="../../datatables.net-select-jqui/css/select.jqueryui.min.css">-->
     <link rel="stylesheet" type="text/css" href="../../semantic/dist/semantic.min.css">
     <script src="../../semantic/dist/semantic.min.js"></script> 
+    <link rel="stylesheet" type="text/css" href="../../semantic-ui-range-master/range.css">
+    <script src="../../semantic-ui-range-master/range.js"></script>
     
 
     <!--<link rel="import" href="../../epiviz-charts/epiviz-scatter-plot.html">
@@ -64,12 +66,15 @@
         height: 100%;
     }
     #rightmenu {
-        overflow:scroll;
+        overflow: scroll;
         max-height: 100%;
     }
     #leftmenu {
         max-height: 100%;
         overflow: scroll;
+    }
+    .tab {
+        height: 72%;
     }
 </style>
 
@@ -94,7 +99,7 @@
                 <div id="leftmenu" class="ui vertical scrolling accordion menu"> 
                     <!--<div class="item">
                         <a class="title">
-                            <div class="ui checkbox">
+                            <div class="ui slider">
                                 <input type="checkbox">
                                 <label>hello</label>
                             </div>
@@ -116,7 +121,17 @@
                 </div>
             </div>
             <div class="twelve wide column">
-                <div id="rightmenu" class="ui vertical fluid accordion menu">
+                <div class="ui top attached tabular menu" id="first">
+                    <a class="active item" data-tab="first">First</a>
+                    <a class="item" data-tab="second">Second</a>
+                </div>
+                <div class="ui bottom attached active tab segment" data-tab="first">
+                    <div id="rightmenu" class="ui vertical fluid accordion menu">
+                    </div>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="second">
+                    <div id="rightmenu2" class="ui vertical fluid accordion menu">
+                    </div>
                 </div>
             </div>
         </div>
@@ -148,6 +163,7 @@
             item.appendChild(text);
             div.appendChild(item);
         });
+        $('.menu .item').tab();
     }
     function overlay() {
         el = document.getElementById("overlay");
@@ -162,6 +178,7 @@
             var length = data.result.id.length;
             var info = data.result;
             var values;
+            var ranges = {};
             measurements = {};
             measurements[data.result.datasourceId] = []
             annotations = Object.keys(data.result.annotation[0]);
@@ -198,21 +215,45 @@
                 values.sort(function(a, b) {
                     return a - b;
                 });
-                values.forEach(function(anno) {
+                if (text === "Age" || text === "index") {
                     var field = document.createElement('div');
-                    var checkbox = document.createElement('div');
-                    var input = document.createElement('input');
-                    var label = document.createElement('label');  
+                    var range1 = document.createElement('div');
+                    var range2 = document.createElement('div');
+                    var display1 = document.createElement('span');
+                    var display2 = document.createElement('span');
+
                     field.className = "field";
-                    checkbox.className = "ui radio checkbox";
-                    input.type = "checkbox"
-                    input.name = "small"
-                    label.innerHTML = anno; 
+                    range1.className = "ui range"
+                    range1.id = text + "-range1";
+                    range2.className = "ui range";
+                    range2.id = text + "-range2";
+                    display1.id = text + "-display1";
+                    display2.id = text + "-display2";
+
                     fields.appendChild(field);
-                    field.appendChild(checkbox);
-                    checkbox.appendChild(input);
-                    checkbox.appendChild(label);  
-                });
+                    field.appendChild(range1);
+                    field.appendChild(display1);
+                    field.appendChild(range2);
+                    field.appendChild(display2);
+                    ranges[range1.id] = values;
+                    ranges[range2.id] = values;
+                } else {
+                    values.forEach(function(anno) {
+                        var field = document.createElement('div');
+                        var checkbox = document.createElement('div');
+                        var input = document.createElement('input');
+                        var label = document.createElement('label');  
+                        field.className = "field";
+                        checkbox.className = "ui radio checkbox";
+                        input.type = "checkbox"
+                        input.name = "small"
+                        label.innerHTML = anno; 
+                        fields.appendChild(field);
+                        field.appendChild(checkbox);
+                        checkbox.appendChild(input);
+                        checkbox.appendChild(label);  
+                    });
+                }
                 item.className = "item";
                 item.id = text;
                 title.className = "title";
@@ -226,9 +267,19 @@
                 item.appendChild(content);
                 title.appendChild(icon);
                 content.appendChild(fields);
-  
 
                 $('#leftmenu').append(item);
+            });
+            Object.keys(ranges).forEach(function(ids) {
+                console.log('#'+ ids.split('-')[0] + "-display" + ids.charAt(ids.length-1));
+                $('#' + ids).range({
+                    min: ranges[ids][0],
+                    max: ranges[ids][ranges[ids].length-1],
+                    start: 0,
+                    onChange: function(value) {
+                        $('#'+ ids.split('-')[0] + "-display" + ids.charAt(ids.length-1)).html(value);
+                    }
+                });
             });
             $('#leftmenu').accordion({
                 exclusive: false
