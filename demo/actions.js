@@ -1,3 +1,8 @@
+var table;
+var measurements;
+var filters = {};
+var graph;
+var selections = {};
 window.onload = function() {
     $('#testing').range({
         min: 0,
@@ -76,15 +81,33 @@ function attachActions() {
         $('.ui.modal').hide();
     });
     $('.ui.checkbox input[type="checkbox"]').click(function(e) {
-        console.log(this);
-        e.stopPropagation();
         var split = this.id.split('-');
-        if (split[0] === "source") {
+        //this means that you selected the measurement checkbox
+        if (split[0] === "source") {            
+            var checked = $(this).parent().prop('class').indexOf('checked') !== -1;
+            $(this).parent().toggleClass('checked');
             var ids = $('.ui.checkbox[id$=' + split[1] + ']');
             ids.each(function(index) {
-                $(ids[index]).checkbox('set checked');
-                console.log(ids[index]);
-            })
+                if (checked) {
+                    $(ids[index]).checkbox('set unchecked');
+                    delete selections[ids[index].id.split('-')[1]];
+                } else {
+                    $(ids[index]).checkbox('set checked');
+                    $(ids[index]).children().removeClass('hidden');
+                    selections[ids[index].id.split('-')[1]] = 1;
+                }
+            });
+        } else {
+            var checked = $(this).parent().prop('class').indexOf('checked') !== -1;
+            var id = $(this).parent().prop('id');
+            if (checked) {
+                $(this).parent().checkbox('set unchecked');
+                delete selections[id.split('-')[1]];
+            } else {
+                $(this).parent().checkbox('set checked');
+                $(this).removeClass('hidden');
+                selections[id.split('-')[1]] = 1;
+            }
         }
     })
 }

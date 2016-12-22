@@ -21,7 +21,6 @@ function rightAccordion() {
             item.id = source;
             title.className = "title";
             titlecheckbox.className = "ui checkbox";
-            titlecheckbox.id = source;
             checkboxinput.type = "checkbox";
             checkboxinput.id = "source-" + source;
             checkboxlabel.innerHTML = source;
@@ -36,6 +35,7 @@ function rightAccordion() {
                 fields.className = "grouped fields";
                 field.className = "field";
                 field.id = point.id;
+                field.style = "padding-left: 2.5%";
                 checkbox.className = "ui checkbox";
                 checkbox.id = "item-" + point.id + "-" + source;
                 input.type = "checkbox";
@@ -55,7 +55,6 @@ function rightAccordion() {
             titlecheckbox.appendChild(checkboxinput);
             titlecheckbox.appendChild(checkboxlabel);
             content.appendChild(fields);    
-
             $('#rightmenu').append(item);
         });
     }
@@ -176,16 +175,6 @@ function loadMeasurements() {
         for (var i = 0; i < checkboxIndex; i++) {
             $('#checkbox' + i).checkbox({
                 onChecked: function() {
-                    //is checked is always late because it calls onchange first before it changes status
-                    //false means the person just checked the box
-                    /*console.log($(this).);
-                    if ($(this).checkbox("is checked")) {
-                        $(this).checkbox("set unchecked");
-                        unfilter($(this).val());
-                    } else if ($(this).checkbox("is unchecked")) {
-                        $(this).checkbox("set checked");
-                        filter($(this).val());
-                    }*/
                     filter($(this).val().split("-")[1], $(this).val().split("-")[0], true);
                 },
                 onUnchecked: function() {
