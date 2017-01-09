@@ -1,14 +1,10 @@
 var table;
 var measurements;
+var current_measurements;
 var filters = {};
 var graph;
 var selections = {};
 window.onload = function() {
-    $('#testing').range({
-        min: 0,
-        max: 10,
-        start:5
-    });
     var graphs = ["Blocks Track", "Line Track", "Stacked Track", "Genes Track", "Scatter Plot", "Heatmap", "Line Plot", "Stacked Plot", "Icicle"];
     var div = document.getElementById("menu");
     graphs.forEach(function(graph) {
@@ -21,10 +17,19 @@ window.onload = function() {
         div.appendChild(item);
     });
     $('.menu .item').tab();
-
     $(document).on('click', '#modalbutton', function() {
-        $('#newmodal').show();
+        $('#newmodal').modal({
+            observeChanges: true
+        });
+        $('#newmodal').modal('show');
         loadMeasurements();
+    });
+    $(document).on('click', '#epivizbutton', function() {
+        $('#newmodal').modal({
+            observeChanges: true
+        });
+        $('#newmodal').modal('show');
+        epiviz_measurements();
     });
     $(document).on('click', '#item', function() {
         graph = $(this).text().toLowerCase();
@@ -32,18 +37,16 @@ window.onload = function() {
         load();
         $('#modal').show();
     })
-    // $(document).on('click', '.ui.checkbox input', function(e) {
-    //     e.stopPropogation();
-    //     console.log("clicked");
-    //     var split = this.id.split('-');
-    //     if (split[0] === "source") {
-    //         var ids = $('[id$=' + split[1] + ']');
-    //         ids.checkbox('check');
-    //     }   
-
-    // });
 }
 function attachActions() {
+    $('#test').range({
+        min: 0,
+        max: 10,
+        start:10,
+        onchange: function(value) {
+            $('#testdisplay').html("Value= " + value);
+        }
+    });
     $('#button').click(function(e) {
         console.log(table.rows( { selected: true } ).data());
         var data = table.rows( { selected: true} ).data();
@@ -109,46 +112,88 @@ function attachActions() {
                 selections[id.split('-')[1]] = 1;
             }
         }
-    })
+    });
+    
 }
+
 function filter(value, anno, filter) {
-    console.log(measurements);
-    console.log(annotations);
-    console.log(anno);
-    console.log(filters);
-    var all_empty = true;
-    //filtering for this value
-    //if (filter) {
-    console.log(filters[anno].indexOf(value));
-    console.log(value);
-    console.log(filters);
+    var list;
+    var recalc;
+    var new_list = {};
     if (filter) {
-        filters[anno].push(value);
+        //recalculate from original list if you are modifying an exisitng filter
+        recalc = filters[anno].values.length === 0 ? false : true;
+        if (filters[anno].type === "range") {
+            recalc = true;
+            filters[anno].values = value;
+        } else {
+            filters[anno].values.push(value);
+        }
     } else {
-        filters[anno].splice(filters[anno].indexOf(value),1);
+        filters[anno].values.splice(filters[anno].values.indexOf(value),1);
+        recalc = true;
     }
+    //If filters are all empty, show entire dataset
     Object.keys(filters).forEach(function(list) {
         if (filters[list].length !== 0) {
             all_empty = false;
         }
     });
-    Object.keys(measurements).forEach(function(source) {
-        measurements[source].forEach(function(data) {
+    console.log(current_measurements);
+    if (recalc || !current_measurements) {
+        list = measurements;
+        current_measurements = {};
+    } else {
+        list = current_measurements;
+    }
+    Object.keys(list).forEach(function(source) {
+        new_list[source] = [];
+    });
+    Object.keys(list).forEach(function(source) {
+        list[source].forEach(function(data) {
             var hide = false;
             if (!(all_empty && $('#' + data['id']).css('display') === 'none')) {
-                Object.keys(filters).forEach(function(category) {
-                    if (filters[category].length !== 0) {
-                        if (filters[category].indexOf(data['annotation'][category]) === -1) {
+                if (recalc) {
+                    Object.keys(filters).forEach(function(category) {
+                        var val = filters[category].values;
+                        var type = filters[category].type;
+                        if (val.length !== 0) {
+                            if (type === "range") {
+                                if (data['annotation'][category] < val[0] || data['annotation'][category] > val[1]) {
+                                    hide = true;
+                                }
+                            }
+                            else if (filters[category].values.indexOf(data['annotation'][category]) === -1) {
+                                hide = true;
+                            }
+                        }
+                    });
+                } else {
+                    if (filters[anno].values.length !== 0) {
+                        var val = filters[anno].values;
+                        var type = filters[anno].type;
+                        if (type === "range") {
+                            if (data['annotation'][anno] < val[0] || data['annotation'][anno] > val[1]) {
+                                hide = true;
+                            }
+                        }
+                        else if (filters[anno].values.indexOf(data['annotation'][anno]) === -1) {
                             hide = true;
                         }
                     }
-                });
+                }
             }
+            current_measurements = new_list;
             if (hide) {
                 $('#' + data['id']).hide();
             } else {
+                new_list[source].push(data);
                 $('#' + data['id']).show();
             }
         });
     });
 }  
+function getRandom(max, min) {
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+

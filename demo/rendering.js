@@ -1,12 +1,7 @@
-var table;
-var measurements;
-var filters = {};
-var graph;
-var selections = {};
 function rightAccordion() {
     for (var i = 0; i < 1; i++) {
+        console.log(measurements)
         Object.keys(measurements).forEach(function(source) {
-            console.log('this is source' + source);
             var item = document.createElement('div');
             var title = document.createElement('a');
             var titlecheckbox = document.createElement('div');
@@ -16,7 +11,7 @@ function rightAccordion() {
             var content = document.createElement('div');
             var form = document.createElement('div'); 
             var fields = document.createElement('div');
-            
+
             item.className = "item";
             item.id = source;
             title.className = "title";
@@ -28,10 +23,15 @@ function rightAccordion() {
             content.className = "content";
             form.className = "ui form";
             measurements[source].forEach(function(point) {
+
                 var field = document.createElement('div');
                 var checkbox = document.createElement('div');
                 var input = document.createElement('input');
-                var label = document.createElement('label');   
+                var label = document.createElement('label');
+                var span1 = document.createElement('span');
+                var span2 = document.createElement('span');
+                var span3 = document.createElement('span');
+
                 fields.className = "grouped fields";
                 field.className = "field";
                 field.id = point.id;
@@ -41,12 +41,19 @@ function rightAccordion() {
                 input.type = "checkbox";
                 //input.id = "item-" + point.id + "-" + source;
                 input.name = "small";
-                label.innerHTML = point.id;     
+                span1.innerHTML = point.id;
+                // span2.innerHTML = point.annotation[Object.keys(point.annotation)[0]];
+                // span2.style = "padding-left: 5em";
+                // span3.innerHTML = point.annotation[Object.keys(point.annotation[1])]; 
+                // span3.style = "padding-left: 5em";
 
+                label.appendChild(span1);
+                // label.appendChild(span2);
+                // label.appendChild(span3);
                 fields.appendChild(field);
                 field.appendChild(checkbox);
                 checkbox.appendChild(input);
-                checkbox.appendChild(label);    
+                checkbox.appendChild(label);  
             })
             item.appendChild(title);
             item.appendChild(content);
@@ -58,7 +65,6 @@ function rightAccordion() {
             $('#rightmenu').append(item);
         });
     }
-    console.log('rightmenu');
     $('#rightmenu').accordion({
         exclusive : false,
         selector : {
@@ -72,32 +78,39 @@ function overlay() {
     el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
 }
 //left menu
-function loadMeasurements() {
-    $.getJSON('./measurements', function(data) {
-        var length = data.result.id.length;
-        var info = data.result;
-        var values;
+function epiviz_measurements() {
+    $.getJSON('./measurements2', function(data) {
+        var info = data.data;
+        var length = info.id.length;
+        var values = [];
         var ranges = {};
         var checkboxIndex = 0;
+        var i = 0;
         measurements = {};
-        measurements[data.result.datasourceId] = []
-        annotations = Object.keys(data.result.annotation[0]);
+        while(info.annotation[i] == null) {
+            i++;
+        }
+        annotations = Object.keys(info.annotation[i]);
         console.log(annotations);
         for (var i = 0; i < length; i++) {
             var obj = {
                 "id": info.id[i],
                 "name": info.name[i],
-                "type": info.type,
+                "type": info.type[i],
                 "annotation": info.annotation[i],
-                "datasourcegroup": info.datasourceGroup,
-                "defaultChartType": info.defaultChartType,
-                "minValue": info.minValue,
-                "maxValue": info.maxValue,
-                "metadata": info.metadata,
+                "datasourcegroup": info.datasourceGroup[i],
+                "datasourceId": info.datasourceId[i],
+                "defaultChartType": info.defaultChartType[i],
+                "minValue": info.minValue[i],
+                "maxValue": info.maxValue[i],
+                "metadata": info.metadata[i],
             }
-            measurements[data.result.datasourceId].push(obj);
+            if (!measurements[info.datasourceId[i]]) {
+                measurements[info.datasourceId[i]] = [];
+            }
+            measurements[info.datasourceId[i]].push(obj);
         }
-        console.log(measurements)
+        console.log(measurements);
         annotations.forEach(function(text) {
             var item = document.createElement('div');
             var title = document.createElement('a');
@@ -105,39 +118,41 @@ function loadMeasurements() {
             var content = document.createElement('div');
             var form = document.createElement('div');
             var fields = document.createElement('div');
-            
+            values = [];
             Object.keys(measurements).forEach(function(data_source) {
                 values = $.unique(measurements[data_source].map(function(id) {
-                    return id.annotation[text];
-                }));
+                    if (id.annotation != null && text in id.annotation) {
+                        return id.annotation[text];
+                    }
+                }).concat(values));
+                values = values.filter(function (d) {
+                    return d != undefined;
+                });
             });
             values.sort(function(a, b) {
                 return a - b;
             });
-            filters[text] = [];
-            if (text === "Age" || text === "index") {
+            console.log(parseInt(values[getRandom(0, values.length - 1)]));
+            if (parseInt(values[getRandom(0, values.length - 1)]) && values.length > 5) {
+                filters[text] = {values: [], type: "range"};
                 var field = document.createElement('div');
                 var range1 = document.createElement('div');
                 var range2 = document.createElement('div');
                 var display1 = document.createElement('span');
-                var display2 = document.createElement('span');
                 var cont1 = document.createElement('p');
                 var cont2 = document.createElement('p');
-
                 field.className = "field";
                 field.width = "inherit";
                 range1.className = "ui range"
                 range1.id = text + "-range1";
                 display1.id = text + "-display1";
-                cont1.innerHTML = "Min: ";
-                cont2.innerHTML = "Max: ";
                 fields.appendChild(field);
                 field.appendChild(range1);
                 cont1.appendChild(display1);
                 field.appendChild(cont1);
                 ranges[range1.id] = values;
-                ranges[range2.id] = values;
             } else {
+                filters[text] = {values: [], type: "normal"};
                 values.forEach(function(anno) {
                     var field = document.createElement('div');
                     var checkbox = document.createElement('div');
@@ -185,25 +200,168 @@ function loadMeasurements() {
         $('#leftmenu').accordion({
             exclusive: false
         });
+        //Right menu
         Object.keys(ranges).forEach(function(ids) {
             if (ids.charAt(ids.length-1) == '1') {
                 $('#' + ids).range({
-                    min: ranges[ids][0],
-                    max: ranges[ids][ranges[ids].length-1],
                     start: ranges[ids][0],
                     values: [ranges[ids][0], ranges[ids][ranges[ids].length-1]],
                     step: 1,
-                    onChange: function(value) {
-
-                        $('#'+ ids.split('-')[0] + "-display" + ids.charAt(ids.length-1)).html(value);
+                    onChange: function(min, max) {
+                        $('#'+ ids.split('-')[0] + "-display" + ids.charAt(ids.length-1)).html("Min: " + min + " " + "Max:" + max);
                     }
+                });
+                $('#' + ids + " .thumb").on('mousedown', function() {
+                    $(document).on('mouseup', function() {
+                        $('#' + ids).range('get value', function(val) {filter(val, ids.split('-')[0], "range")});
+                        $(document).off('mouseup');
+                    });
                 });
             }
         });
         $('.active.content').each(function(index) {
             $('.active.content')[0].className = 'content';
-        })
+        });
+        rightAccordion();
+        attachActions();
+    });
+}
+function loadMeasurements() {
+    $.getJSON('./measurements', function(data) {
+        var info = data.result;
+        var length = info.id.length;
+        var values;
+        var ranges = {};
+        var checkboxIndex = 0;
+        var i = 0;
+        measurements = {};
+        measurements[info.datasourceId] = []
+        while(info.annotation[i] == null) {
+            i++;
+        }
+        annotations = Object.keys(info.annotation[i]);
+        console.log(annotations);
+        for (var i = 0; i < length; i++) {
+            var obj = {
+                "id": info.id[i],
+                "name": info.name[i],
+                "type": info.type,
+                "annotation": info.annotation[i],
+                "datasourcegroup": info.datasourceGroup,
+                "defaultChartType": info.defaultChartType,
+                "minValue": info.minValue,
+                "maxValue": info.maxValue,
+                "metadata": info.metadata,
+            }
+            measurements[info.datasourceId].push(obj);
+        }
+        console.log(measurements)
+        annotations.forEach(function(text) {
+            var item = document.createElement('div');
+            var title = document.createElement('a');
+            var icon = document.createElement('i');
+            var content = document.createElement('div');
+            var form = document.createElement('div');
+            var fields = document.createElement('div');
+            
+            Object.keys(measurements).forEach(function(data_source) {
+                values = $.unique(measurements[data_source].map(function(id) {
+                    return id.annotation[text];
+                }));
+            });
+            values.sort(function(a, b) {
+                return a - b;
+            });
+            console.log(parseInt(values[getRandom(0, values.length - 1)]));
+            if (parseInt(values[getRandom(0, values.length - 1)]) && values.length > 5) {
+                filters[text] = {values: [], type: "range"};
+                var field = document.createElement('div');
+                var range1 = document.createElement('div');
+                var range2 = document.createElement('div');
+                var display1 = document.createElement('span');
+                var cont1 = document.createElement('p');
+                var cont2 = document.createElement('p');
+                field.className = "field";
+                field.width = "inherit";
+                range1.className = "ui range"
+                range1.id = text + "-range1";
+                display1.id = text + "-display1";
+                fields.appendChild(field);
+                field.appendChild(range1);
+                cont1.appendChild(display1);
+                field.appendChild(cont1);
+                ranges[range1.id] = values;
+            } else {
+                filters[text] = {values: [], type: "normal"};
+                values.forEach(function(anno) {
+                    var field = document.createElement('div');
+                    var checkbox = document.createElement('div');
+                    var input = document.createElement('input');
+                    var label = document.createElement('label');  
+                    field.className = "field";
+                    checkbox.className = "ui checkbox";
+                    checkbox.id = "checkbox" + checkboxIndex;
+                    input.type = "checkbox"
+                    input.name = anno;
+                    input.value = text + "-" + anno;
+                    label.innerHTML = anno; 
+                    fields.appendChild(field);
+                    field.appendChild(checkbox);
+                    checkbox.appendChild(input);
+                    checkbox.appendChild(label);
+                    checkboxIndex++;
+                });
+            }
+            item.className = "item";
+            item.id = text;
+            title.className = "title";
+            title.innerHTML = text;
+            icon.className = "dropdown icon";
+            content.className = "active content";
+            form.className = "ui form";
+            fields.className = "grouped fields";
+
+            item.appendChild(title);
+            item.appendChild(content);
+            title.appendChild(icon);
+            content.appendChild(fields);
+            $('#leftmenu').append(item);
+        });
+        for (var i = 0; i < checkboxIndex; i++) {
+            $('#checkbox' + i).checkbox({
+                onChecked: function() {
+                    filter($(this).val().split("-")[1], $(this).val().split("-")[0], true);
+                },
+                onUnchecked: function() {
+                    filter($(this).val().split("-")[1], $(this).val().split("-")[0], false);
+                }
+            });
+        }
+        $('#leftmenu').accordion({
+            exclusive: false
+        });
         //Right menu
+        Object.keys(ranges).forEach(function(ids) {
+            if (ids.charAt(ids.length-1) == '1') {
+                $('#' + ids).range({
+                    start: ranges[ids][0],
+                    values: [ranges[ids][0], ranges[ids][ranges[ids].length-1]],
+                    step: 1,
+                    onChange: function(min, max) {
+                        $('#'+ ids.split('-')[0] + "-display" + ids.charAt(ids.length-1)).html("Min: " + min + " " + "Max:" + max);
+                    }
+                });
+                $('#' + ids + " .thumb").on('mousedown', function() {
+                    $(document).on('mouseup', function() {
+                        $('#' + ids).range('get value', function(val) {filter(val, ids.split('-')[0], "range")});
+                        $(document).off('mouseup');
+                    });
+                });
+            }
+        });
+        $('.active.content').each(function(index) {
+            $('.active.content')[0].className = 'content';
+        });
         rightAccordion();
         attachActions();
     });

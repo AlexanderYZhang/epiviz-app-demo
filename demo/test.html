@@ -48,35 +48,45 @@
         position: relative;
         top: 200px;
     }*/
-    .ui.modal {
+    .ui.long.modal {
         position: fixed;
         top: 15%;
         left: 40%;
-        padding: 20px;
     } 
     #button {
         float: right;
     }
-    .ui.action.input {
+    .ui.input {
         width: 100%;
     }
     #newmodal {
-       height:50%;
+        left: 50%;
+        top: 40%;
+        height: 100%;
+        max-height: 400px !important;
     }
     .ui.grid {
         padding: 10px;
-        height: 100%;
+        max-height: inherit;
+    }
+    .content {
+        max-height: inherit;
     }
     #rightmenu {
-        overflow: scroll;
-        max-height: 100%;
+        overflow: auto;
+        height: 100%;
+        max-height: inherit;
     }
     #leftmenu {
-        max-height: 100%;
-        overflow: scroll;
+        max-height: 93%;
+        overflow: auto;
     }
     .tab {
         height: 72%;
+    }
+    #test {
+        position: absolute;
+        top:500px;
     }
 </style>
 
@@ -89,57 +99,61 @@
             </div>
         </div>
         <a class="item" id="modalbutton">Modal</a>
+        <a class="item" id="epivizbutton">Epiviz</a>
     </div>
-    <div class="ui equal height grid">
-        <div class="four wide column">
-            <div class='ui range' id="testing"> </div>
-        </div>
+    <div class="ui range" id="test">
     </div>
-    <div id ="newmodal" class="ui modal">
-        <div class="ui action input">
-            <button class="ui button">Filter</button>
-            <input id="filter" type="text" placeholder="Filter">
-        </div>
-        <div class="ui equal height grid">
-            <div class="four wide column">
-                <div id="leftmenu" class="ui vertical scrolling accordion menu"> 
-                    <!--<div class="item">
-                        <a class="title">
-                            <div class="ui slider">
-                                <input type="checkbox">
-                                <label>hello</label>
-                            </div>
-                            <i class="dropdown icon"></i>
-                        </a>
-                        <div class="content">
-                            <div class="ui form">
-                                <div class="grouped fields">
-                                    <div class="field">
-                                        <div class="ui radio checkbox">
-                                            <input type="checkbox" name="hello">
-                                            <label>checkbox</label>
+    <div id ="newmodal" class="ui long modal">
+        <div class="content">
+            <div class="ui input">
+                <button class="ui button">Filter</button>
+                <input id="filter" type="text" placeholder="Filter">
+            </div>
+            <div class="ui grid">
+                <div class="four wide column">
+                    <div id="leftmenu" class="ui vertical scrolling accordion menu"> 
+                        <!--<div class="item">
+                            <a class="title">
+                                <div class="ui slider">
+                                    <input type="checkbox">
+                                    <label>hello</label>
+                                </div>
+                                <i class="dropdown icon"></i>
+                            </a>
+                            <div class="content">
+                                <div class="ui form">
+                                    <div class="grouped fields">
+                                        <div class="field">
+                                            <div class="ui radio checkbox">
+                                                <input type="checkbox" name="hello">
+                                                <label>checkbox</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>-->
+                    </div>
+                </div>
+                <div class="twelve wide column">
+                    <div class="ui top attached tabular menu" id="first">
+                        <a class="active item" data-tab="first">First</a>
+                        <a class="item" data-tab="second">Second</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="first">
+                        <div id="rightmenu" class="ui vertical fluid accordion menu">
                         </div>
-                    </div>-->
-                </div>
-            </div>
-            <div class="twelve wide column">
-                <div class="ui top attached tabular menu" id="first">
-                    <a class="active item" data-tab="first">First</a>
-                    <a class="item" data-tab="second">Second</a>
-                </div>
-                <div class="ui bottom attached active tab segment" data-tab="first">
-                    <div id="rightmenu" class="ui vertical fluid accordion menu">
                     </div>
-                </div>
-                <div class="ui bottom attached tab segment" data-tab="second">
-                    <div id="rightmenu2" class="ui vertical fluid accordion menu">
+                    <div class="ui bottom attached tab segment" data-tab="second">
+                        <div id="rightmenu2" class="ui vertical fluid accordion menu">
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="actions">
+            <div class="ui button" id="cancel">Cancel</div>
+            <div class="ui primary button" id="ok">Ok</div>
         </div>
     </div>
 
