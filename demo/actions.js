@@ -19,14 +19,22 @@ window.onload = function() {
     $('.menu .item').tab();
     $(document).on('click', '#modalbutton', function() {
         $('#newmodal').modal({
-            observeChanges: true
+            observeChanges: true,
+            onHidden: function() {
+                $('#leftmenu').empty();
+                $('#rightmenu').empty();
+            }
         });
         $('#newmodal').modal('show');
         loadMeasurements();
     });
     $(document).on('click', '#epivizbutton', function() {
         $('#newmodal').modal({
-            observeChanges: true
+            observeChanges: true,
+            onHidden: function() {
+                $('#leftmenu').empty();
+                $('#rightmenu').empty();
+            }
         });
         $('#newmodal').modal('show');
         epiviz_measurements();
@@ -86,34 +94,118 @@ function attachActions() {
     $('.ui.checkbox input[type="checkbox"]').click(function(e) {
         var split = this.id.split('-');
         //this means that you selected the measurement checkbox
-        if (split[0] === "source") {            
+        if (split[0] === "source") {
             var checked = $(this).parent().prop('class').indexOf('checked') !== -1;
-            $(this).parent().toggleClass('checked');
             var ids = $('.ui.checkbox[id$=' + split[1] + ']');
-            ids.each(function(index) {
+            var $count = $('#count-' + split[1]);
+            var selected = parseInt($count.attr("data-selected"));
+            var total = parseInt($count.attr("data-total"));
+
+            $(this).parent().toggleClass('checked');
+            $('#rightmenu').accordion('refresh');
+            _.each(ids, function(value) {
                 if (checked) {
-                    $(ids[index]).checkbox('set unchecked');
-                    delete selections[ids[index].id.split('-')[1]];
+                    $(value).checkbox('set unchecked');
+                    delete selections[value.id.split('-')[1]];
                 } else {
-                    $(ids[index]).checkbox('set checked');
-                    $(ids[index]).children().removeClass('hidden');
-                    selections[ids[index].id.split('-')[1]] = 1;
+                    $(value).checkbox('set checked');
+                    $(value).children().removeClass('hidden');
+                    selections[value.id.split('-')[1]] = 1;
                 }
             });
+            if (checked) {
+                $count.attr("data-selected", 0)
+                $count.html(" (" + $count.attr("data-selected") + " of " + $count.attr('data-total') + ")");
+            } else {
+                $count.attr("data-selected", total);
+                $count.html(" (" + $count.attr("data-selected") + " of " + $count.attr('data-total') + ")");
+            }
         } else {
             var checked = $(this).parent().prop('class').indexOf('checked') !== -1;
-            var id = $(this).parent().prop('id');
+            var split = $(this).parent().prop('id').split('-');
+            var $count = $('#count-' + split[3]);
+            var selected = parseInt($count.attr("data-selected"));
+            var total = parseInt($count.attr('data-total'));
             if (checked) {
                 $(this).parent().checkbox('set unchecked');
-                delete selections[id.split('-')[1]];
+                delete selections[split[1]];
             } else {
                 $(this).parent().checkbox('set checked');
                 $(this).removeClass('hidden');
-                selections[id.split('-')[1]] = 1;
+                selections[split[1]] = 1;
+            }
+            if (checked) {
+                selected = selected - 1;
+                $count.attr("data-selected", selected)
+                $count.html(" (" + $count.attr("data-selected") + " of " + $count.attr('data-total') + ")");
+            } else {
+                selected = selected + 1;
+                $count.attr("data-selected", selected);
+                $count.html(" (" + $count.attr("data-selected") + " of " + $count.attr('data-total') + ")");
+            }
+
+            if (selected > 0 && selected !== total) {
+                $('#source-' + split[3]).parent().checkbox('set indeterminate');
+                $('#source-' + split[3]).removeClass('hidden');
+
+            } else if (selected === total){
+                $('#source-' + split[3]).parent().checkbox('set checked');
+                $('#source-' + split[3]).removeClass('hidden');
+            } else if (selected === 0) {
+                $('#source-' + split[3]).parent().checkbox('set unchecked');
+                $('#source-' + split[3]).removeClass('hidden');
             }
         }
     });
     
+    $('#rightmenu .field .checkbox label').mouseenter(function() {
+        var parent = $(this).parent();
+        var split = parent.attr('id').split('-');
+        var popup_id = "popup-" + split[1] + "-" + split[3];
+        if ($("#" + popup_id).length === 0) {
+            var point = measurements[split[3]][split[2]];
+            var headers = ['id', 'name', 'datasourcegroup'];
+            var contents = [point.id, point.name, point.datasourcegroup];
+            if (point.annotation != null) {
+                Object.keys(point.annotation).forEach(function(val) {
+                    headers.push(val);
+                    contents.push(point.annotation[val]);
+                });
+            }
+
+            //creating popup as seperate div to give it columns
+            var popup = document.createElement('div');
+            var table = document.createElement('table');
+            var t_body = document.createElement('tbody');
+            popup.className = 'ui popup';
+            popup.id = "popup-" + point.id + "-" + split[3];
+            table.className = 'ui compact table';
+            table.appendChild(t_body);
+            //add columns to the grid
+            for (var j = 0; j < contents.length; j++) {
+                var row = document.createElement('tr');
+                var col1 = document.createElement('td');
+                var col2 = document.createElement('td');
+                row.appendChild(col1);
+                row.appendChild(col2);
+                col1.innerHTML = headers[j];
+                col2.innerHTML = contents[j];
+                t_body.appendChild(row);
+            }
+            popup.appendChild(table);
+            $(this).append(popup);
+            $(this).popup({
+                popup: '#' + popup.id,
+                position: 'right center',
+                hoverable: true,
+                delay: {
+                    show:50,
+                    hide: 200,
+                }
+            });      
+            $(this).popup('show');     
+        }   
+    });
 }
 
 function filter(value, anno, filter) {
@@ -134,12 +226,11 @@ function filter(value, anno, filter) {
         recalc = true;
     }
     //If filters are all empty, show entire dataset
-    Object.keys(filters).forEach(function(list) {
-        if (filters[list].length !== 0) {
+    _.forEach(filters, function(list, key) {
+        if (key.length !== 0) {
             all_empty = false;
         }
     });
-    console.log(current_measurements);
     if (recalc || !current_measurements) {
         list = measurements;
         current_measurements = {};
@@ -158,7 +249,10 @@ function filter(value, anno, filter) {
                         var val = filters[category].values;
                         var type = filters[category].type;
                         if (val.length !== 0) {
-                            if (type === "range") {
+                            if (data['annotation'] == null || !(category in data['annotation'])) {
+                                hide = true;
+                            }
+                            else if (type === "range") {
                                 if (data['annotation'][category] < val[0] || data['annotation'][category] > val[1]) {
                                     hide = true;
                                 }
@@ -172,7 +266,10 @@ function filter(value, anno, filter) {
                     if (filters[anno].values.length !== 0) {
                         var val = filters[anno].values;
                         var type = filters[anno].type;
-                        if (type === "range") {
+                        if (data['annotation'] == null || !(anno in data['annotation'])) {
+                            hide = true;
+                        }
+                        else if (type === "range") {
                             if (data['annotation'][anno] < val[0] || data['annotation'][anno] > val[1]) {
                                 hide = true;
                             }
@@ -197,3 +294,16 @@ function getRandom(max, min) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
+function sortAlphaNum(a,b) {
+    var reA = /[^a-zA-Z]/g;
+    var reN = /[^0-9]/g;
+    var aA = a.replace(reA, "");
+    var bA = b.replace(reA, "");
+    if(aA === bA) {
+        var aN = parseInt(a.replace(reN, ""), 10);
+        var bN = parseInt(b.replace(reN, ""), 10);
+        return aN === bN ? 0 : aN > bN ? 1 : -1;
+    } else {
+        return aA > bA ? 1 : -1;
+    }
+}

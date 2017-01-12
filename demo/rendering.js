@@ -1,70 +1,68 @@
 function rightAccordion() {
-    for (var i = 0; i < 1; i++) {
-        console.log(measurements)
-        Object.keys(measurements).forEach(function(source) {
-            var item = document.createElement('div');
-            var title = document.createElement('a');
-            var titlecheckbox = document.createElement('div');
-            var checkboxlabel = document.createElement('label');
-            var checkboxinput = document.createElement('input');
-            var icon = document.createElement('i');
-            var content = document.createElement('div');
-            var form = document.createElement('div'); 
-            var fields = document.createElement('div');
+    _.forEach(measurements, function(value, source) {
+        var item = document.createElement('div');
+        var title = document.createElement('a');
+        var titlecheckbox = document.createElement('div');
+        var checkboxlabel = document.createElement('label');
+        var checkboxcount = document.createElement('span');
+        var $count = $(checkboxcount);
+        var checkboxinput = document.createElement('input');
+        var icon = document.createElement('i');
+        var content = document.createElement('div');
+        var form = document.createElement('div'); 
+        var fields = document.createElement('div');
 
-            item.className = "item";
-            item.id = source;
-            title.className = "title";
-            titlecheckbox.className = "ui checkbox";
-            checkboxinput.type = "checkbox";
-            checkboxinput.id = "source-" + source;
-            checkboxlabel.innerHTML = source;
-            icon.className = "dropdown icon";
-            content.className = "content";
-            form.className = "ui form";
-            measurements[source].forEach(function(point) {
+        item.className = "item";
+        item.id = source;
+        title.className = "title";
+        titlecheckbox.className = "ui checkbox";
+        checkboxinput.type = "checkbox";
+        checkboxinput.id = "source-" + source;
+        //set main checkbox label and selection count
+        checkboxlabel.innerHTML = source;
+        $count.attr('id', "count-" + source);
+        $count.attr('data-selected', "0");
+        $count.attr('data-total', value.length);
+        $count.html(" (" + $count.attr("data-selected") + " of " + $count.attr('data-total') + ")");
+        checkboxlabel.appendChild(checkboxcount);
 
-                var field = document.createElement('div');
-                var checkbox = document.createElement('div');
-                var input = document.createElement('input');
-                var label = document.createElement('label');
-                var span1 = document.createElement('span');
-                var span2 = document.createElement('span');
-                var span3 = document.createElement('span');
+        icon.className = "dropdown icon";
+        content.className = "content";
+        form.className = "ui form";
+        _.forEach(value, function(point, index) {
+            var field = document.createElement('div');
+            var checkbox = document.createElement('div');
+            var input = document.createElement('input');
+            var label = document.createElement('label');
+            var span1 = document.createElement('span');
 
-                fields.className = "grouped fields";
-                field.className = "field";
-                field.id = point.id;
-                field.style = "padding-left: 2.5%";
-                checkbox.className = "ui checkbox";
-                checkbox.id = "item-" + point.id + "-" + source;
-                input.type = "checkbox";
-                //input.id = "item-" + point.id + "-" + source;
-                input.name = "small";
-                span1.innerHTML = point.id;
-                // span2.innerHTML = point.annotation[Object.keys(point.annotation)[0]];
-                // span2.style = "padding-left: 5em";
-                // span3.innerHTML = point.annotation[Object.keys(point.annotation[1])]; 
-                // span3.style = "padding-left: 5em";
+            fields.className = "grouped fields";
+            field.className = "field";
+            field.id = point.id;
+            field.style = "padding-left: 2.5%";
+            checkbox.className = "ui checkbox";
+            //point, source, and index to allow for easy indexing in measurements list
+            checkbox.id = "item-" + point.id + "-" + index + "-" + source;
+            input.type = "checkbox";
+            //input.id = "item-" + point.id + "-" + source;
+            input.name = "small";
+            span1.innerHTML = point.id;
 
-                label.appendChild(span1);
-                // label.appendChild(span2);
-                // label.appendChild(span3);
-                fields.appendChild(field);
-                field.appendChild(checkbox);
-                checkbox.appendChild(input);
-                checkbox.appendChild(label);  
-            })
-            item.appendChild(title);
-            item.appendChild(content);
-            title.appendChild(titlecheckbox);
-            title.appendChild(icon);
-            titlecheckbox.appendChild(checkboxinput);
-            titlecheckbox.appendChild(checkboxlabel);
-            content.appendChild(fields);    
-            $('#rightmenu').append(item);
+            label.appendChild(span1);
+            fields.appendChild(field);
+            field.appendChild(checkbox);
+            checkbox.appendChild(input);
+            checkbox.appendChild(label);
         });
-    }
+        item.appendChild(title);
+        item.appendChild(content);
+        title.appendChild(titlecheckbox);
+        title.appendChild(icon);
+        titlecheckbox.appendChild(checkboxinput);
+        titlecheckbox.appendChild(checkboxlabel);
+        content.appendChild(fields);    
+        $('#rightmenu').append(item);
+    });
     $('#rightmenu').accordion({
         exclusive : false,
         selector : {
@@ -119,19 +117,16 @@ function epiviz_measurements() {
             var form = document.createElement('div');
             var fields = document.createElement('div');
             values = [];
-            Object.keys(measurements).forEach(function(data_source) {
-                values = $.unique(measurements[data_source].map(function(id) {
+            _.forEach(measurements, function(value, data_source) {
+                values = _.chain(value).map(function(id) {
                     if (id.annotation != null && text in id.annotation) {
                         return id.annotation[text];
                     }
-                }).concat(values));
-                values = values.filter(function (d) {
+                }).concat(values).uniq().filter(function (d) {
                     return d != undefined;
-                });
+                }).value();
             });
-            values.sort(function(a, b) {
-                return a - b;
-            });
+            values = values.sort(sortAlphaNum);
             console.log(parseInt(values[getRandom(0, values.length - 1)]));
             if (parseInt(values[getRandom(0, values.length - 1)]) && values.length > 5) {
                 filters[text] = {values: [], type: "range"};
@@ -200,7 +195,6 @@ function epiviz_measurements() {
         $('#leftmenu').accordion({
             exclusive: false
         });
-        //Right menu
         Object.keys(ranges).forEach(function(ids) {
             if (ids.charAt(ids.length-1) == '1') {
                 $('#' + ids).range({
@@ -263,15 +257,17 @@ function loadMeasurements() {
             var content = document.createElement('div');
             var form = document.createElement('div');
             var fields = document.createElement('div');
-            
-            Object.keys(measurements).forEach(function(data_source) {
-                values = $.unique(measurements[data_source].map(function(id) {
-                    return id.annotation[text];
-                }));
+            values = [];
+            _.forEach(measurements, function(value, data_source) {
+                values = _.chain(value).map(function(id) {
+                    if (id.annotation != null && text in id.annotation) {
+                        return id.annotation[text];
+                    }
+                }).concat(values).uniq().filter(function (d) {
+                    return d != undefined;
+                }).value();
             });
-            values.sort(function(a, b) {
-                return a - b;
-            });
+            values = values.sort(sortAlphaNum);
             console.log(parseInt(values[getRandom(0, values.length - 1)]));
             if (parseInt(values[getRandom(0, values.length - 1)]) && values.length > 5) {
                 filters[text] = {values: [], type: "range"};
@@ -341,6 +337,7 @@ function loadMeasurements() {
             exclusive: false
         });
         //Right menu
+        console.log(ranges);
         Object.keys(ranges).forEach(function(ids) {
             if (ids.charAt(ids.length-1) == '1') {
                 $('#' + ids).range({

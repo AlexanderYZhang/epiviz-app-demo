@@ -10,7 +10,7 @@
 
 
     <script src="../../jquery/dist/jquery.js"></script>
-
+    <script src="../../lodash/dist/lodash.min.js"></script>
     <!--<script type="text/javascript" src="../../datatables.net/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="../../datatables.net-select/js/dataTables.select.js"></script> 
     <script type="text/javascript" src="../../datatables.net-buttons/js/dataTables.buttons.min.js"></script>
@@ -88,6 +88,17 @@
         position: absolute;
         top:500px;
     }
+    .ui.table {
+        font-size: .8em;
+    }
+    .ui.popup {
+        padding: 3px;
+        padding-left: 10px;
+    }
+    .ui.compact.table td {
+        padding: 0;
+        padding-right: .7em;
+    }
 </style>
 
 <body>
@@ -112,33 +123,12 @@
             <div class="ui grid">
                 <div class="four wide column">
                     <div id="leftmenu" class="ui vertical scrolling accordion menu"> 
-                        <!--<div class="item">
-                            <a class="title">
-                                <div class="ui slider">
-                                    <input type="checkbox">
-                                    <label>hello</label>
-                                </div>
-                                <i class="dropdown icon"></i>
-                            </a>
-                            <div class="content">
-                                <div class="ui form">
-                                    <div class="grouped fields">
-                                        <div class="field">
-                                            <div class="ui radio checkbox">
-                                                <input type="checkbox" name="hello">
-                                                <label>checkbox</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>-->
                     </div>
                 </div>
                 <div class="twelve wide column">
                     <div class="ui top attached tabular menu" id="first">
-                        <a class="active item" data-tab="first">First</a>
-                        <a class="item" data-tab="second">Second</a>
+                        <a class="active item" data-tab="first">Measurements</a>
+                        <a class="item" data-tab="second">Selected Measurements</a>
                     </div>
                     <div class="ui bottom attached active tab segment" data-tab="first">
                         <div id="rightmenu" class="ui vertical fluid accordion menu">
