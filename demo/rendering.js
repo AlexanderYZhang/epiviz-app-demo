@@ -337,7 +337,6 @@ function loadMeasurements() {
             exclusive: false
         });
         //Right menu
-        console.log(ranges);
         Object.keys(ranges).forEach(function(ids) {
             if (ids.charAt(ids.length-1) == '1') {
                 $('#' + ids).range({

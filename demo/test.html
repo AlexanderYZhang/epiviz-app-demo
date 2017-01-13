@@ -6,18 +6,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script> 
+    <!--<script src="../../webcomponentsjs/webcomponents-lite.js"></script> -->
+    <script src="../../webcomponentsjs/webcomponents.min.js"></script>
 
 
     <script src="../../jquery/dist/jquery.js"></script>
     <script src="../../lodash/dist/lodash.min.js"></script>
-    <!--<script type="text/javascript" src="../../datatables.net/js/jquery.dataTables.min.js"></script>
+
+    <script type="text/javascript" src="../../datatables.net/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="../../datatables.net-select/js/dataTables.select.js"></script> 
     <script type="text/javascript" src="../../datatables.net-buttons/js/dataTables.buttons.min.js"></script>
-    <script type="text/javascript" src="TableTools.min.js"></script>-->
+    <script type="text/javascript" src="TableTools.min.js"></script>
 
-    <!--<link rel="stylesheet" type="text/css" href="../../datatables.net-jqui/css/dataTables.jqueryui.min.css">
-    <link rel="stylesheet" type="text/css" href="../../datatables.net-select-jqui/css/select.jqueryui.min.css">-->
+    <link rel="stylesheet" type="text/css" href="../../datatables.net-jqui/css/dataTables.jqueryui.min.css">
+    <link rel="stylesheet" type="text/css" href="../../datatables.net-select-jqui/css/select.jqueryui.min.css">
     <link rel="stylesheet" type="text/css" href="../../semantic/dist/semantic.min.css">
     <script src="../../semantic/dist/semantic.min.js"></script> 
     <link rel="stylesheet" type="text/css" href="../../semantic-ui-range-master/range.css">
@@ -39,15 +41,9 @@
     <link rel="import" href="../../epiviz-environment/epiviz-environment.html">-->
 </head>
 <style>
-/*    #table-container {
-        position: relative;
-        width: 50%;
-        top: 200px;
+    #resultmodal {
+        max-height: 400px;
     }
-    #graph-container {
-        position: relative;
-        top: 200px;
-    }*/
     .ui.long.modal {
         position: fixed;
         top: 15%;
@@ -69,7 +65,8 @@
         padding: 10px;
         max-height: inherit;
     }
-    .content {
+    .content.m {
+        overflow: hidden;
         max-height: inherit;
     }
     #rightmenu {
@@ -115,7 +112,7 @@
     <div class="ui range" id="test">
     </div>
     <div id ="newmodal" class="ui long modal">
-        <div class="content">
+        <div class="content m">
             <div class="ui input">
                 <button class="ui button">Filter</button>
                 <input id="filter" type="text" placeholder="Filter">
@@ -142,12 +139,22 @@
             </div>
         </div>
         <div class="actions">
-            <div class="ui button" id="cancel">Cancel</div>
+            <div class="ui grey button" id="cancel">Cancel</div>
+            <div class="ui primary button" id="ok">Ok</div>
+        </div>
+    </div>
+    <div id="resultmodal" class="ui modal">
+        <div class="content m">
+            <table id="resultTable" class="ui sortable selectable striped table">
+            </table>
+        </div>
+        <div class="actions">
+            <div class="ui grey back button" id="cancel">Back</div>
             <div class="ui primary button" id="ok">Ok</div>
         </div>
     </div>
 
-    <div id="modal" class="ui modal">
+    <div id="modal" class="ui long modal">
         <div id="tablediv">
         </div>
         <button id="button">Finish</button>

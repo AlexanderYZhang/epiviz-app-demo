@@ -4,6 +4,8 @@ var current_measurements;
 var filters = {};
 var graph;
 var selections = {};
+var store = {};
+
 window.onload = function() {
     var graphs = ["Blocks Track", "Line Track", "Stacked Track", "Genes Track", "Scatter Plot", "Heatmap", "Line Plot", "Stacked Plot", "Icicle"];
     var div = document.getElementById("menu");
@@ -20,10 +22,16 @@ window.onload = function() {
     $(document).on('click', '#modalbutton', function() {
         $('#newmodal').modal({
             observeChanges: true,
-            onHidden: function() {
+            closable: false,
+            selector:  {
+                deny: '.ui.grey.button',
+                approve: '.ui.primary.button'
+            },
+            onDeny: function() {
                 $('#leftmenu').empty();
                 $('#rightmenu').empty();
-            }
+            },
+            onApprove: storeMeasurement,
         });
         $('#newmodal').modal('show');
         loadMeasurements();
@@ -31,10 +39,16 @@ window.onload = function() {
     $(document).on('click', '#epivizbutton', function() {
         $('#newmodal').modal({
             observeChanges: true,
-            onHidden: function() {
+            closable: false,
+            selector:  {
+                deny: '.ui.grey.button',
+                approve: '.ui.primary.button'
+            },
+            onDeny: function() {
                 $('#leftmenu').empty();
                 $('#rightmenu').empty();
-            }
+            },
+            onApprove: storeMeasurement,
         });
         $('#newmodal').modal('show');
         epiviz_measurements();
@@ -43,7 +57,8 @@ window.onload = function() {
         graph = $(this).text().toLowerCase();
         graph = graph.replace(" ", "-");
         load();
-        $('#modal').show();
+        $('#modal').modal();
+        $('#modal').modal('show');
     })
 }
 function attachActions() {
@@ -108,9 +123,10 @@ function attachActions() {
                     $(value).checkbox('set unchecked');
                     delete selections[value.id.split('-')[1]];
                 } else {
+                    var split = value.id.split('-');
                     $(value).checkbox('set checked');
                     $(value).children().removeClass('hidden');
-                    selections[value.id.split('-')[1]] = 1;
+                    selections[split[1] + '-' + split[3] + '-' + split[2]] = 0;
                 }
             });
             if (checked) {
@@ -126,13 +142,14 @@ function attachActions() {
             var $count = $('#count-' + split[3]);
             var selected = parseInt($count.attr("data-selected"));
             var total = parseInt($count.attr('data-total'));
+
             if (checked) {
                 $(this).parent().checkbox('set unchecked');
                 delete selections[split[1]];
             } else {
                 $(this).parent().checkbox('set checked');
                 $(this).removeClass('hidden');
-                selections[split[1]] = 1;
+                selections[split[1] + '-' + split[3] + '-' + split[2]] = 0;
             }
             if (checked) {
                 selected = selected - 1;
@@ -226,8 +243,8 @@ function filter(value, anno, filter) {
         recalc = true;
     }
     //If filters are all empty, show entire dataset
-    _.forEach(filters, function(list, key) {
-        if (key.length !== 0) {
+    _.forEach(filters, function(val, key) {
+        if (val.length !== 0) {
             all_empty = false;
         }
     });
@@ -237,10 +254,10 @@ function filter(value, anno, filter) {
     } else {
         list = current_measurements;
     }
-    Object.keys(list).forEach(function(source) {
+    _.forEach(list, function(val, source) {
         new_list[source] = [];
     });
-    Object.keys(list).forEach(function(source) {
+    _.forEach(list, function(val, source) {
         list[source].forEach(function(data) {
             var hide = false;
             if (!(all_empty && $('#' + data['id']).css('display') === 'none')) {
@@ -307,3 +324,202 @@ function sortAlphaNum(a,b) {
         return aA > bA ? 1 : -1;
     }
 }
+
+function storeMeasurement() {
+    var number = _.size(store) + 1;
+    var name = "Chart" + number;
+    var new_list = []
+    console.log(measurements);
+    _.forEach(selections, function(val, index) {
+        var tup = index.split('-');
+        //tup contains [source, index] for easy indexing into measurements 
+        new_list.push(measurements[tup[1]][tup[2]]);
+    });
+    store[name] = new_list;
+    resultTable(name, new_list);
+}
+
+function resultTable(name, list) {
+    $('#resultTable').append()
+    var header = document.createElement('thead');
+    var body = document.createElement('tbody');
+    var headerRow = document.createElement('tr');
+    var th1 = document.createElement('th');
+    var th2 = document.createElement('th');
+    var th3 = document.createElement('th');
+
+    th1.innerHTML = "id";
+    th2.innerHTML = "name";
+    th3.innerHTML = "group";
+    headerRow.appendChild(th1);
+    headerRow.appendChild(th2);
+    headerRow.appendChild(th3);
+    header.appendChild(headerRow);
+    $('#resultTable').append(header);
+    $('#resultTable').append(body);
+
+    _.forEach(list, function(val, index) {
+        var row = document.createElement('tr');
+        var d1 = document.createElement('td');
+        var d2 = document.createElement('td');
+        var d3 = document.createElement('td');
+        console.log(val);
+        d1.innerHTML = val.id;
+        d2.innerHTML = val.name;
+        d3.innerHTML = val.datasourcegroup;
+        row.appendChild(d1);
+        row.appendChild(d2);
+        row.appendChild(d3);
+        body.append(row);
+
+    });
+    $('#resultTable').tablesort();
+    $('#resultmodal').modal({
+        closable: false,
+        selector:  {
+            deny: '.ui.grey.back.button',
+            approve: '.ui.primary.button'
+        },
+        onDeny: function() {
+            $('#newmodal').modal('show');
+        },
+        onApprove: function() {
+            store[name] = list;
+            console.log(store);
+        }
+    });
+    $('#resultmodal').modal('show');
+}
+
+/*
+    A simple, lightweight jQuery plugin for creating sortable tables.
+    https://github.com/kylefox/jquery-tablesort
+    Version 0.0.11
+*/
+
+(function($) {
+    $.tablesort = function ($table, settings) {
+        var self = this;
+        this.$table = $table;
+        this.$thead = this.$table.find('thead');
+        this.settings = $.extend({}, $.tablesort.defaults, settings);
+        this.$sortCells = this.$thead.length > 0 ? this.$thead.find('th:not(.no-sort)') : this.$table.find('th:not(.no-sort)');
+        this.$sortCells.on('click.tablesort', function() {
+            self.sort($(this));
+        });
+        this.index = null;
+        this.$th = null;
+        this.direction = null;
+    };
+
+    $.tablesort.prototype = {
+
+        sort: function(th, direction) {
+            var start = new Date(),
+                self = this,
+                table = this.$table,
+                rowsContainer = table.find('tbody').length > 0 ? table.find('tbody') : table,
+                rows = rowsContainer.find('tr').has('td, th'),
+                cells = rows.find(':nth-child(' + (th.index() + 1) + ')').filter('td, th'),
+                sortBy = th.data().sortBy,
+                sortedMap = [];
+
+            var unsortedValues = cells.map(function(idx, cell) {
+                if (sortBy)
+                    return (typeof sortBy === 'function') ? sortBy($(th), $(cell), self) : sortBy;
+                return ($(this).data().sortValue != null ? $(this).data().sortValue : $(this).text());
+            });
+            if (unsortedValues.length === 0) return;
+
+            //click on a different column
+            if (this.index !== th.index()) {
+                this.direction = 'asc';
+                this.index = th.index();
+            }
+            else if (direction !== 'asc' && direction !== 'desc')
+                this.direction = this.direction === 'asc' ? 'desc' : 'asc';
+            else
+                this.direction = direction;
+
+            direction = this.direction == 'asc' ? 1 : -1;
+
+            self.$table.trigger('tablesort:start', [self]);
+            self.log("Sorting by " + this.index + ' ' + this.direction);
+
+            // Try to force a browser redraw
+            self.$table.css("display");
+            // Run sorting asynchronously on a timeout to force browser redraw after
+            // `tablesort:start` callback. Also avoids locking up the browser too much.
+            setTimeout(function() {
+                self.$sortCells.removeClass(self.settings.asc + ' ' + self.settings.desc);
+                for (var i = 0, length = unsortedValues.length; i < length; i++)
+                {
+                    sortedMap.push({
+                        index: i,
+                        cell: cells[i],
+                        row: rows[i],
+                        value: unsortedValues[i]
+                    });
+                }
+
+                sortedMap.sort(function(a, b) {
+                    return self.settings.compare(a.value, b.value) * direction;
+                });
+
+                $.each(sortedMap, function(i, entry) {
+                    rowsContainer.append(entry.row);
+                });
+
+                th.addClass(self.settings[self.direction]);
+
+                self.log('Sort finished in ' + ((new Date()).getTime() - start.getTime()) + 'ms');
+                self.$table.trigger('tablesort:complete', [self]);
+                //Try to force a browser redraw
+                self.$table.css("display");
+            }, unsortedValues.length > 2000 ? 200 : 10);
+        },
+
+        log: function(msg) {
+            if(($.tablesort.DEBUG || this.settings.debug) && console && console.log) {
+                console.log('[tablesort] ' + msg);
+            }
+        },
+
+        destroy: function() {
+            this.$sortCells.off('click.tablesort');
+            this.$table.data('tablesort', null);
+            return null;
+        }
+
+    };
+
+    $.tablesort.DEBUG = false;
+
+    $.tablesort.defaults = {
+        debug: $.tablesort.DEBUG,
+        asc: 'sorted ascending',
+        desc: 'sorted descending',
+        compare: function(a, b) {
+            if (a > b) {
+                return 1;
+            } else if (a < b) {
+                return -1;
+            } else {
+                return 0;
+            }
+        }
+    };
+
+    $.fn.tablesort = function(settings) {
+        var table, sortable, previous;
+        return this.each(function() {
+            table = $(this);
+            previous = table.data('tablesort');
+            if(previous) {
+                previous.destroy();
+            }
+            table.data('tablesort', new $.tablesort(table, settings));
+        });
+    };
+
+})(window.Zepto || window.jQuery);
