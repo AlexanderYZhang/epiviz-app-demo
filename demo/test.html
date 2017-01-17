@@ -16,7 +16,6 @@
     <script type="text/javascript" src="../../datatables.net/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="../../datatables.net-select/js/dataTables.select.js"></script> 
     <script type="text/javascript" src="../../datatables.net-buttons/js/dataTables.buttons.min.js"></script>
-    <script type="text/javascript" src="TableTools.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="../../datatables.net-jqui/css/dataTables.jqueryui.min.css">
     <link rel="stylesheet" type="text/css" href="../../datatables.net-select-jqui/css/select.jqueryui.min.css">
@@ -26,6 +25,7 @@
     <script src="../../semantic-ui-range-master/range.js"></script>
     <script src="./rendering.js"></script>
     <script src="./actions.js"></script>
+    <script src="./Tablesort.js"></script>
     
 
     <!--<link rel="import" href="../../epiviz-charts/epiviz-scatter-plot.html">
@@ -49,6 +49,10 @@
         top: 15%;
         left: 40%;
     } 
+    .bounds {
+        max-height: 100%;
+        overflow: scroll;
+    }
     #button {
         float: right;
     }
@@ -67,7 +71,7 @@
     }
     .content.m {
         overflow: hidden;
-        max-height: inherit;
+        max-height: 400px;
     }
     #rightmenu {
         overflow: auto;
@@ -145,8 +149,10 @@
     </div>
     <div id="resultmodal" class="ui modal">
         <div class="content m">
-            <table id="resultTable" class="ui sortable selectable striped table">
-            </table>
+            <div class="bounds">
+                <table id="resultTable" class="ui sortable selectable striped table">
+                </table>
+            </div>
         </div>
         <div class="actions">
             <div class="ui grey back button" id="cancel">Back</div>
