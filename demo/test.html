@@ -100,6 +100,11 @@
         padding: 0;
         padding-right: .7em;
     }
+    #sourcemodal {
+        width: auto;
+        left: 60%;
+        
+    }
 </style>
 
 <body>
@@ -114,50 +119,6 @@
         <a class="item" id="epivizbutton">Epiviz</a>
     </div>
     <div class="ui range" id="test">
-    </div>
-    <div id ="newmodal" class="ui long modal">
-        <div class="content m">
-            <div class="ui input">
-                <button class="ui button">Filter</button>
-                <input id="filter" type="text" placeholder="Filter">
-            </div>
-            <div class="ui grid">
-                <div class="four wide column">
-                    <div id="leftmenu" class="ui vertical scrolling accordion menu"> 
-                    </div>
-                </div>
-                <div class="twelve wide column">
-                    <div class="ui top attached tabular menu" id="first">
-                        <a class="active item" data-tab="first">Measurements</a>
-                        <a class="item" data-tab="second">Selected Measurements</a>
-                    </div>
-                    <div class="ui bottom attached active tab segment" data-tab="first">
-                        <div id="rightmenu" class="ui vertical fluid accordion menu">
-                        </div>
-                    </div>
-                    <div class="ui bottom attached tab segment" data-tab="second">
-                        <div id="rightmenu2" class="ui vertical fluid accordion menu">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="actions">
-            <div class="ui grey button" id="cancel">Cancel</div>
-            <div class="ui primary button" id="ok">Ok</div>
-        </div>
-    </div>
-    <div id="resultmodal" class="ui modal">
-        <div class="content m">
-            <div class="bounds">
-                <table id="resultTable" class="ui sortable selectable striped table">
-                </table>
-            </div>
-        </div>
-        <div class="actions">
-            <div class="ui grey back button" id="cancel">Back</div>
-            <div class="ui primary button" id="ok">Ok</div>
-        </div>
     </div>
 
     <div id="modal" class="ui long modal">

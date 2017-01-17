@@ -20,23 +20,27 @@ window.onload = function() {
     });
     $('.menu .item').tab();
     $(document).on('click', '#modalbutton', function() {
-        $('#newmodal').modal({
-            observeChanges: true,
+        initialize(["msd16s", "1", "2"]);
+        $('#sourcemodal').modal({
             closable: false,
-            selector:  {
+            selector: {
                 deny: '.ui.grey.button',
                 approve: '.ui.primary.button'
             },
             onDeny: function() {
-                $('#leftmenu').empty();
-                $('#rightmenu').empty();
+                $('#sourcemodal').modal('hide');
+                $('#sourcemodal').remove();
+                $('#newmodal').remove();
             },
-            onApprove: storeMeasurement,
+            onApprove: function() {
+                var source = $('#form').form('get value', 'radio');
+                showModal(source);
+            }
         });
-        $('#newmodal').modal('show');
-        loadMeasurements();
+        $('#sourcemodal').modal('show');
     });
     $(document).on('click', '#epivizbutton', function() {
+        initialize();
         $('#newmodal').modal({
             observeChanges: true,
             closable: false,
@@ -59,8 +63,115 @@ window.onload = function() {
         load();
         $('#modal').modal();
         $('#modal').modal('show');
-    })
+    });
 }
+
+function showModal(source) {
+    $('#newmodal').modal({
+        observeChanges: true,
+        closable: false,
+        selector:  {
+            deny: '.ui.grey.button',
+            approve: '.ui.primary.button'
+        },
+        onDeny: function() {
+            $('#leftmenu').empty();
+            $('#rightmenu').empty();
+        },
+        onApprove: storeMeasurement,
+    });
+    $('#newmodal').modal('show');
+    loadMeasurements(source);
+}
+
+function initialize(sources) {
+    var modal = 
+    `<div id ="newmodal" class="ui long modal">
+        <div class="content m">
+            <div class="ui input">
+                <button class="ui button">Filter</button>
+                <input id="filter" type="text" placeholder="Filter">
+            </div>
+            <div class="ui grid">
+                <div class="four wide column">
+                    <div id="leftmenu" class="ui vertical scrolling accordion menu"> 
+                    </div>
+                </div>
+                <div class="twelve wide column">
+                    <div class="ui top attached tabular menu" id="first">
+                        <a class="active item" data-tab="first">Measurements</a>
+                        <a class="item" data-tab="second">Selected Measurements</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="first">
+                        <div id="rightmenu" class="ui vertical fluid accordion menu">
+                        </div>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="second">
+                        <div id="rightmenu2" class="ui vertical fluid accordion menu">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui grey button" id="cancel">Cancel</div>
+            <div class="ui primary button" id="ok">Ok</div>
+        </div>
+    </div>
+    <div id="resultmodal" class="ui modal">
+        <div class="content m">
+            <div class="bounds">
+                <table id="resultTable" class="ui sortable selectable striped table">
+                </table>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui grey back button" id="cancel">Back</div>
+            <div class="ui primary button" id="ok">Ok</div>
+        </div>
+    </div>`
+
+    var form =     
+    `<div class="ui small modal" id="sourcemodal">
+        <div class="header">
+            Select Data Source
+        </div>
+        <div class="content">
+            <div class="ui form" id="form">
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui grey button" id="cancel">Cancel</div>
+            <div class="ui primary button" id="ok">Ok</div>
+        </div>
+    </div>`
+    //document.body.innerHTML += form;
+    $('body').append(form);
+    var fields = document.createElement('div');
+    fields.className = "grouped fields";
+    sources.forEach(function(value) {
+        var field = document.createElement('div');
+        var checkbox = document.createElement('div');
+        var input = document.createElement('input');
+        var label = document.createElement('label');
+        label.innerHTML = value;
+        checkbox.className = "ui radio checkbox";
+        input.type = "radio";
+        input.name = "radio";
+        input.value = value;
+        field.className = "field";
+        
+        checkbox.appendChild(input);
+        checkbox.appendChild(label);
+        field.appendChild(checkbox);
+        fields.appendChild(field);
+        console.log($(checkbox));
+    });
+    $('#form').append(fields);
+    $('#form').form();
+    document.body.innerHTML += modal;
+}
+
 function attachActions() {
     $('#test').range({
         min: 0,
@@ -258,6 +369,8 @@ function filter(value, anno, filter) {
         new_list[source] = [];
     });
     _.forEach(list, function(val, source) {
+        
+        console.log($('#source-' + source).children());
         list[source].forEach(function(data) {
             var hide = false;
             if (!(all_empty && $('#' + data['id']).css('display') === 'none')) {

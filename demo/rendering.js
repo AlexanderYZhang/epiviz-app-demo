@@ -229,7 +229,6 @@ function loadMeasurements() {
         var checkboxIndex = 0;
         var i = 0;
         measurements = {};
-        measurements[info.datasourceId] = []
         while(info.annotation[i] == null) {
             i++;
         }
@@ -241,13 +240,16 @@ function loadMeasurements() {
                 "name": info.name[i],
                 "type": info.type,
                 "annotation": info.annotation[i],
-                "datasourcegroup": info.datasourceGroup,
+                "datasourcegroup": info.datasourceGroup[i],
                 "defaultChartType": info.defaultChartType,
                 "minValue": info.minValue,
                 "maxValue": info.maxValue,
                 "metadata": info.metadata,
             }
-            measurements[info.datasourceId].push(obj);
+            if (!measurements[info.datasourceId[i]]) {
+                measurements[info.datasourceId[i]] = [];
+            }
+            measurements[info.datasourceId[i]].push(obj);
         }
         console.log(measurements)
         annotations.forEach(function(text) {
